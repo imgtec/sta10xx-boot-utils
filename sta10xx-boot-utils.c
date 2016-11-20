@@ -14,14 +14,14 @@
 
 extern unsigned crc32(unsigned int crc, const void *buf, int size);
 
-int calcrc32(void *data, int size)
+unsigned int calcrc32(void *data, int size)
 {
 
 #if 1
 	return crc32(0, data, size);
 #else	
 	fprintf(stderr, "TODO: CRC %p %d\n", data, size);
-	return 0xdeadbeef;
+	return 0x4d435243;
 #endif
 }
 
@@ -48,22 +48,22 @@ struct firmware {
 	int crc32prog;
 	int crc32head;
 	
-	char *buffer; /* 32 or 64? */
+	char buffer[sizeof(M3_xl)-sizeof(header)];
 };
 
 
 int main(int argc, char *argv[])
 {
 	struct firmware *fw;
-	int i,j;
+	unsigned int i,j;
 	int ch;
+	FILE *in, *out;
 
 	if(sizeof(*fw)-sizeof(fw->buffer) != 64) {
 		fprintf(stderr, "???\n");
 		return -1;
 	}
 
-	FILE *in = NULL, *out = NULL;
 //	if(argc > 1) filein = argv[1];
 //	if(argc > 2) fileout = argv[2];
 
@@ -77,7 +77,6 @@ int main(int argc, char *argv[])
 	fw->filelen = -1;
 	fw->crc32prog = 0;
 	fw->crc32head = 0;
-	fw->buffer = &M3_xl[64];
 
 /* 简单朴素，使用标准输入输出就行 */
 	in = stdin;
@@ -117,22 +116,18 @@ int main(int argc, char *argv[])
 		}
 	}
 #endif
-
-
 	
 	fw->crc32prog = calcrc32(fw->buffer, fw->filelen);
 	fw->crc32head = calcrc32(fw, sizeof(header)-sizeof(fw->crc32head));
 
-	fprintf(stderr, "file size: [%d]\n", fw->filelen);
+	fprintf(stderr, "file size: [%08X]\n", fw->filelen);
 
 	for(i=0; i<fw->filelen + sizeof(header); i++) {
 		int ch;
-		ch = (unsigned char)M3_xl[i];
+		ch = 0xFF & M3_xl[i];
 		putc(ch, out);
 	}
+	fprintf(stderr, "writen bytes [%d]\n", i);
 
 }
-
-
-
 
