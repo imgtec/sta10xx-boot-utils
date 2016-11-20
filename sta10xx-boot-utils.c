@@ -27,7 +27,6 @@ unsigned int calcrc32(void *data, int size)
 
 
 
-/* 但是这个数组字址不以4对齐，可能挂了，这问题不解决算了。 */
 char header[64] = {
 0xEB,0x10,0x90,0x00,0x03,0x00,0x00,0x0A,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 0x80,0x3B,0x01,0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x40,0x00,0x00,0x00,
@@ -104,17 +103,11 @@ int main(int argc, char *argv[])
 
 	fprintf(stderr, "firmware size limit[%lu]\n", sizeof(M3_xl));
 
-/* 初始化 fw 结构 */
 	fw = (void *)M3_xl;
-
 	memcpy(fw, header, 64);
-
 	fw->filelen = -1;
 	fw->crc32prog = 0;
 	fw->crc32head = 0;
-
-
-/* 固件总大小不能超过 64KB */
 
 	for(i=0; (ch=fgetc(in)) != EOF;i++) {
 		if(i >= sizeof(M3_xl)-sizeof(header)) {
@@ -138,15 +131,18 @@ int main(int argc, char *argv[])
 	fprintf(stderr, "file size read[%d]\n", fw->filelen);
 
 #ifdef PAD16
+	i = 0;
 	while(fw->filelen % 16) {
 		fw->buffer[fw->filelen] = '\xff';
 		fw->filelen++;
+		i++;
 		
 		if(fw->filelen >= sizeof(M3_xl)-sizeof(header)) {
-			fprintf(stderr, "pad failed[%d].\n", fw->filelen);
+			fprintf(stderr, "pad failed[%d]\n", fw->filelen);
 			return -3;
 		}
 	}
+	fprintf(stderr, "pad count[%d]\n", i);
 #endif
 	
 	fw->crc32prog = calcrc32(fw->buffer, fw->filelen);
