@@ -12,11 +12,17 @@
 #include <string.h>
 
 
+extern unsigned crc32(unsigned int crc, const void *buf, int size);
+
 int calcrc32(void *data, int size)
 {
-	
+
+#if 1
+	return crc32(0, data, size);
+#else	
 	fprintf(stderr, "TODO: CRC %p %d\n", data, size);
 	return 0xdeadbeef;
+#endif
 }
 
 
