@@ -58,14 +58,49 @@ int main(int argc, char *argv[])
 	unsigned int i,j;
 	int ch;
 	FILE *in, *out;
+	char filein[250];
+	char fileout[250];
 
 	if(sizeof(*fw)-sizeof(fw->buffer) != 64) {
 		fprintf(stderr, "???\n");
 		return -1;
 	}
 
-//	if(argc > 1) filein = argv[1];
-//	if(argc > 2) fileout = argv[2];
+	if(argc > 1) {
+		strcpy(filein, argv[1]);
+		in = fopen(filein, "rb");
+		if(in == NULL) {
+			fprintf(stderr, "can't read file[%s]\n", filein);
+			return -4;
+		} else {
+			fprintf(stderr, "read from file[%s]\n", filein);
+		}
+
+	} else {
+		in = stdin;
+#ifdef WIN32
+		fprintf(stderr, "usage: %s infile outfile", argv[0]);
+		return -10;
+#endif
+	}
+
+
+	if(argc > 2) {
+		strcpy(fileout, argv[2]);
+		out = fopen(fileout, "wb");
+		if(out) {
+			fprintf(stderr, "write to file[%s]\n", fileout);
+		} else {
+			fprintf(stderr, "can't write to file[%s]\n", fileout);
+			return -5;
+		}
+	} else {
+		out = stdout;
+#ifdef WIN32
+		fprintf(stderr, "usage: %s infile outfile", argv[0]);
+		return -11;
+#endif
+	}
 
 	fprintf(stderr, "firmware size limit[%lu]\n", sizeof(M3_xl));
 
@@ -78,9 +113,6 @@ int main(int argc, char *argv[])
 	fw->crc32prog = 0;
 	fw->crc32head = 0;
 
-/* 简单朴素，使用标准输入输出就行 */
-	in = stdin;
-	out = stdout;	
 
 /* 固件总大小不能超过 64KB */
 
@@ -120,14 +152,14 @@ int main(int argc, char *argv[])
 	fw->crc32prog = calcrc32(fw->buffer, fw->filelen);
 	fw->crc32head = calcrc32(fw, sizeof(header)-sizeof(fw->crc32head));
 
-	fprintf(stderr, "file size: [%08X]\n", fw->filelen);
+	fprintf(stderr, "file size[%08X]\n", fw->filelen);
 
 	for(i=0; i<fw->filelen + sizeof(header); i++) {
 		int ch;
 		ch = 0xFF & M3_xl[i];
 		putc(ch, out);
 	}
-	fprintf(stderr, "writen bytes [%d]\n", i);
-
+	fprintf(stderr, "writen bytes[%d]\n", i);
+	return 0;
 }
 
