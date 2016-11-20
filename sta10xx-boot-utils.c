@@ -67,6 +67,12 @@ int main(int argc, char *argv[])
 
 	if(argc > 1) {
 		strcpy(filein, argv[1]);
+		if(strcmp(filein, "-v") == 0) {
+#ifdef COMMIT
+			fprintf(stderr, "%s\n", COMMIT);
+#endif
+			return 0;
+		}
 		in = fopen(filein, "rb");
 		if(in == NULL) {
 			fprintf(stderr, "can't read file[%s]\n", filein);
